@@ -1,0 +1,80 @@
+<project name="RuneScapeClassic" default="all" basedir=".">
+    <property name="src" location="source" />
+    <property name="src.client" location="${src}/client" />
+    <property name="src.server" location="${src}/server" />
+    <property name="src.common" location="${src}/common" />
+    <property name="out" location="out" />
+    <property name="build" location="${out}/build" />
+    <property name="build.client" location="${build}/client" />
+    <property name="build.server" location="${build}/server" />
+    <property name="build.common" location="${build}/common" />
+    <property name="dist" location="${out}/dist" />
+    <property name="dist.client" location="${dist}/client" />
+    <property name="dist.server" location="${dist}/server" />
+
+    <target name="init">
+        <mkdir dir="${out}" />
+        <mkdir dir="${build}" />
+        <mkdir dir="${build.client}" />
+        <mkdir dir="${build.server}" />
+        <mkdir dir="${build.common}" />
+        <mkdir dir="${dist}" />
+        <mkdir dir="${dist.client}" />
+        <mkdir dir="${dist.server}" />
+    </target>
+
+    <target name="compile-common" depends="init">
+        <javac srcdir="${src.common}" destdir="${build}">
+            <compilerarg line="-encoding UTF-8" />
+        </javac>
+    </target>
+
+    <target name="compile-client" depends="compile-common">
+        <javac srcdir="${src.client}" destdir="${build}">
+            <classpath>
+                <pathelement path="${build.common}" />
+            </classpath>
+            <compilerarg line="-encoding UTF-8" />
+        </javac>
+    </target>
+
+    <target name="compile-server" depends="compile-common">
+        <javac srcdir="${src.server}" destdir="${build}">
+            <classpath>
+                <pathelement path="${build.common}" />
+            </classpath>
+            <compilerarg line="-encoding UTF-8" />
+        </javac>
+    </target>
+
+    <target name="copy-client-data" depends="compile-client">
+        <copy todir="${dist.client}/data204">
+            <fileset dir="./data204" />
+        </copy>
+    </target>
+
+    <target name="jar-client" depends="copy-client-data">
+        <jar destfile="${dist.client}/client.jar" basedir="${build.client}">
+            <manifest>
+                <attribute name="Main-Class" value="client.mudclient"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="jar-server" depends="compile-server">
+        <jar destfile="${dist.server}/server.jar" basedir="${build.server}">
+            <manifest>
+                <attribute name="Main-Class" value="server.Server"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="all" depends="jar-client, jar-server">
+        <echo message="Build complete: client.jar and server.jar created." />
+    </target>
+
+    <target name="clean">
+        <delete dir="${build}" />
+        <delete dir="${dist}" />
+    </target>
+</project>
