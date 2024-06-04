@@ -1,6 +1,6 @@
 # Runarius
 
-A RuneScape Classic client and server. The client is loosely based on mudclient204, but neither the client nor the server is compatible with any other clients or servers. They are designed to work together exclusively.
+A RuneScape Classic client and server rewritten from scratch in Java. The client is loosely based on mudclient204, but neither the client nor the server is compatible with any other clients or servers. They are designed to work together exclusively.
 
 ![](./doc/screenshot.png?raw=true)
 
