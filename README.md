@@ -14,7 +14,7 @@ In the terminal run:
 
     $ ant
 
-This will build the client and the server in dist/client and dist/server.
+This will build the client and the server in `out/dist/client` and `out/dist/server`.
 
 ## license
 
