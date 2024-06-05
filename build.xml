@@ -26,10 +26,6 @@
     <!-- Compile client classes with common classes in classpath -->
     <target name="compile-client" depends="compile-common">
         <javac srcdir="${src.dir}/client" destdir="${build.dir}/client">
-            <!-- Add dependencies -->
-            <classpath>
-                <pathelement path="${build.dir}/common" />
-            </classpath>
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
@@ -37,10 +33,6 @@
     <!-- Compile server classes with common classes in classpath -->
     <target name="compile-server" depends="compile-common">
         <javac srcdir="${src.dir}/server" destdir="${build.dir}/server">
-            <!-- Add dependencies -->
-            <classpath>
-                <pathelement path="${build.dir}/common" />
-            </classpath>
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
@@ -60,9 +52,8 @@
             <manifest>
                 <attribute name="Main-Class" value="mudclient"/>
             </manifest>
-            <!-- Include all compiled client classes in the JAR -->
+            <!-- Include all compiled classes in the JAR -->
             <fileset dir="${build.dir}/client" />
-            <!-- Include all compiled common classes in the JAR -->
             <fileset dir="${build.dir}/common" />
         </jar>
     </target>
@@ -77,7 +68,6 @@
             </manifest>
             <!-- Include all compiled server classes in the JAR -->
             <fileset dir="${build.dir}/server" />
-            <!-- Include all compiled common classes in the JAR -->
             <fileset dir="${build.dir}/common" />
         </jar>
     </target>
