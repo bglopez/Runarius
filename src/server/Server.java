@@ -35,7 +35,7 @@ public class Server {
                 Socket socket = serverSocket.accept();
                 System.out.println("New client connected");
 
-                threadPool.execute(new Client(socket));
+                threadPool.execute(new ClientHandler(socket));
             }
         } catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());

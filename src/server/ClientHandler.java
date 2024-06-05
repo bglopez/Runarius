@@ -5,10 +5,10 @@ import java.net.Socket;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class Client implements Runnable {
+public class ClientHandler implements Runnable {
     private Socket socket;
 
-    public Client(Socket socket) {
+    public ClientHandler(Socket socket) {
         this.socket = socket;
     }
 
