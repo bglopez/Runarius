@@ -28,7 +28,7 @@ public class ClientHandler implements Runnable {
                         byte[] dataBuffer = inputStream.readNBytes(length - 2); // read length without length-bytes (2)
                         Buffer data = new Buffer(dataBuffer);
 
-                        IPacketHandler handler = ServerPacketHandlers.getHandlerByOpcode(opcode);
+                        IPacketHandler handler = ServerSidePacketHandlers.getHandlerByOpcode(opcode);
 
                         if (handler != null) {
                             handler.handle(socket, data);

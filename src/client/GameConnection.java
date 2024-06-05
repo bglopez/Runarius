@@ -233,7 +233,7 @@ public class GameConnection extends GameShell {
                     byte[] dataBuffer = inStream.readNBytes(length - 2); // read length without length-bytes (2)
                     Buffer data = new Buffer(dataBuffer);
     
-                    IPacketHandler handler = ClientPacketHandlers.getHandlerByOpcode(opcode);
+                    IPacketHandler handler = ClientSidePacketHandlers.getHandlerByOpcode(opcode);
     
                     if (handler != null) {
                         handler.handle(socket, data);

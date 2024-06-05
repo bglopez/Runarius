@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class ServerPacketHandlers {
+public class ServerSidePacketHandlers {
     private static final Map<Opcodes.Client, IPacketHandler> packetHandlers = new HashMap<>();
 
     static {
