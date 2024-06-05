@@ -35,6 +35,7 @@ public class Opcodes {
         CL_INV_UNEQUIP((short)170),
         CL_INV_WEAR((short)169),
         CL_KNOWN_PLAYERS((short)163),
+        CL_REGISTER_ACCOUNT((short)2),
         CL_LOGIN((short)0),
         CL_LOGOUT((short)102),
         CL_NPC_ATTACK((short)190),

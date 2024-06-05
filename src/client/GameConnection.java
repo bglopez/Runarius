@@ -58,76 +58,48 @@ public class GameConnection extends GameShell {
         }
         try {
             this.username = user;
-            user = Utility.formatAuthString(user, 20);
             this.password = pass;
-            pass = Utility.formatAuthString(pass, 20);
 
             showLoginScreenStatus("Please wait...", "Connecting to server");
-            clientStream = new ClientStream(createSocket(server, port), this);
-            clientStream.newPacket(Opcodes.Client.CL_SESSION.value);
-            clientStream.putByte((int) (Utility.username2hash(user) >> 16 & 31L));
-            clientStream.sendAndFlushPacket();
-            long sessid = clientStream.getLong();
+
+            if (socket == null) {
+                socket = NetHelper.createSocket(server, port);
+            }
+            OutputStream outputStream = socket.getOutputStream();
+            InputStream inputStream = socket.getInputStream();
+
+            Buffer out = new Buffer();
+            out.putShort(Opcodes.Client.CL_SESSION.value); 
+            out.putString(username);
+            outputStream.write(out.toArrayWithLen());
+            outputStream.flush();
+
+            Buffer in = new Buffer(inputStream.readNBytes(Long.BYTES));
+            long sessid = in.getLong();
             sessionID = sessid;
+
             if (sessid == 0L) {
-                showLoginScreenStatus("Login server offline.", "Please try again in a few mins");
+                showLoginScreenStatus("Login server offline.", "Please try again later");
                 return;
             }
-            System.out.println("Verb: Session id: " + sessid);
 
-            clientStream.newPacket(2);
-            clientStream.putShort(clientVersion);
-            clientStream.putString(user);
-            clientStream.putString(pass);
-            clientStream.sendAndFlushPacket();
+            out = new Buffer();
+            out.putShort(Opcodes.Client.CL_REGISTER_ACCOUNT.value);
+            out.putInt(clientVersion);
+            out.putLong(sessionID);
+            out.putString(user);
+            out.putString(pass);
+            outputStream.write(out.toArrayWithLen());
+            outputStream.flush();
 
-            int response = clientStream.readStream();
-            clientStream.closeStream();
-            System.out.println("Newplayer response: " + response);
+            in = new Buffer(inputStream.readNBytes(Integer.BYTES));
+            RegistrationResponse registrationResponse = RegistrationResponse.fromCode(in.getInt());
 
-            switch(response) {
-                case 2: // Success
-                    resetLoginVars();
-                    return;
-                case 13: // Username taken
-                case 3:
-                    showLoginScreenStatus("Username already taken.", "Please choose another username");
-                    return;
-                case 4: // Username in use.  Distinction??
-                    showLoginScreenStatus("That username is already in use.", "Wait 60 seconds then retry");
-                    return;
-                case 5: // Client has been updated
-                    showLoginScreenStatus("The client has been updated.", "Please reload this page");
-                    return;
-                case 6: // IP address in use
-                    showLoginScreenStatus("You may only use 1 character at once.", "Your ip-address is already in use");
-                    return;
-                case 7: // Spam throttle was hit
-                    showLoginScreenStatus("Login attempts exceeded!", "Please try again in 5 minutes");
-                    return;
-                case 11: // Temporary ban
-                    showLoginScreenStatus("Account has been temporarily disabled", "for cheating or abuse");
-                    return;
-                case 12: // Permanent ban
-                    showLoginScreenStatus("Account has been permanently disabled", "for cheating or abuse");
-                    return;
-                case 14: // server full
-                    showLoginScreenStatus("Sorry! The server is currently full.", "Please try again later");
-                    worldFullTimeout = 1500;
-                    return;
-                case 15: // Members account needed
-                    showLoginScreenStatus("You need a members account", "to login to this server");
-                    return;
-                case 16: // Switch to members server
-                    showLoginScreenStatus("Please login to a members server", "to access member-only features");
-                    return;
-                default:
-                    showLoginScreenStatus("Error unable to create user.", "Unrecognised response code");
-                    return;
-            }
-        } catch(Exception e) {
+            showLoginScreenStatus(registrationResponse.getMessage(), registrationResponse.getSubMessage());
+            
+        } catch(Exception ex) {
             // This should catch any I/O issues
-            e.printStackTrace();
+            ex.printStackTrace();
             showLoginScreenStatus("Error unable to create user.", "Unrecognised response code");
         }
     }
@@ -165,206 +137,42 @@ public class GameConnection extends GameShell {
             out = new Buffer();
             out.putShort(Opcodes.Client.CL_LOGIN.value);
             out.putInt(clientVersion);
-            out.putLong(sessid);
+            out.putLong(sessionID);
             out.putString(username);
             out.putString(password);
             outputStream.write(out.toArrayWithLen());
             outputStream.flush();
 
+            in = new Buffer(inputStream.readNBytes(Integer.BYTES));
+            LoginResponse loginResponse = LoginResponse.fromCode(in.getInt());
+
+            if (loginResponse.getCode() == 25) {
+                moderatorLevel = 1;
+                autoLoginTimeout = 0;
+                resetGame();
+                return;
+            }
+            if (loginResponse.getCode() == 0) {
+                moderatorLevel = 0;
+                autoLoginTimeout = 0;
+                resetGame();
+                return;
+            }
+            if (loginResponse.getCode() == 1) {
+                autoLoginTimeout = 0;
+                method37();
+                return;
+            }
+
+            showLoginScreenStatus(loginResponse.getMessage(), loginResponse.getMessage());
+
 
         } catch (IOException ex) {
+            ex.printStackTrace();
             System.out.println("Unable to create socket: " + ex.getMessage());
         }
                                                                 
     }
-
-    // protected void login(String u, String p, boolean reconnecting) {
-    //     if (worldFullTimeout > 0) {
-    //         showLoginScreenStatus("Please wait...", "Connecting to server");
-    //         try {
-    //             Thread.sleep(2000L);
-    //         } catch (Exception Ex) {
-    //         }
-    //         showLoginScreenStatus("Sorry! The server is currently full.", "Please try again later");
-    //         return;
-    //     }
-    //     try {
-    //         username = u;
-    //         u = Utility.formatAuthString(u, 20);
-    //         password = p;
-    //         p = Utility.formatAuthString(p, 20);
-    //         if (u.trim().length() == 0) {
-    //             showLoginScreenStatus("You must enter both a username", "and a password - Please try again");
-    //             return;
-    //         }
-    //         if (reconnecting)
-    //             drawTextBox("Connection lost! Please wait...", "Attempting to re-establish");
-    //         else
-    //             showLoginScreenStatus("Please wait...", "Connecting to server");
-    //         clientStream = new ClientStream(createSocket(server, port), this);
-    //         clientStream.maxReadTries = maxReadTries;
-    //         long l = Utility.username2hash(u);
-    //         clientStream.newPacket(PackedID.Client.CL_SESSION.value);
-    //         clientStream.putByte((int) (l >> 16 & 31L));
-    //         clientStream.sendAndFlushPacket();
-    //         long sessid = clientStream.getLong();
-    //         sessionID = sessid;
-    //         if (sessid == 0L) {
-    //             showLoginScreenStatus("Login server offline.", "Please try again in a few mins");
-    //             return;
-    //         }
-    //         System.out.println("Verb: Session id: " + sessid);
-    //         int limit30 = 0;
-
-    //         int ai[] = new int[4];
-    //         ai[0] = (int) (Math.random() * 99999999D);
-    //         ai[1] = (int) (Math.random() * 99999999D);
-    //         ai[2] = (int) (sessid >> 32);
-    //         ai[3] = (int) sessid;
-
-    //         clientStream.newPacket(PackedID.Client.CL_LOGIN.value);
-    //         if (reconnecting)
-    //             clientStream.putByte(1);
-    //         else
-    //             clientStream.putByte(0);
-    //         clientStream.putShort(clientVersion);
-    //         clientStream.putByte(limit30);
-
-    //         clientStream.putByte(10);
-    //         clientStream.putInt(ai[0]);
-    //         clientStream.putInt(ai[1]);
-    //         clientStream.putInt(ai[2]);
-    //         clientStream.putInt(ai[3]);
-    //         clientStream.putInt(getLinkUID());
-    //         clientStream.putString(u);
-    //         clientStream.putString(p);
-
-    //         clientStream.sendAndFlushPacket();
-    //         int resp = clientStream.readStream();
-    //         System.out.println("login response:" + resp);
-    //         if (resp == 25) {
-    //             moderatorLevel = 1;
-    //             autoLoginTimeout = 0;
-    //             resetGame();
-    //             return;
-    //         }
-    //         if (resp == 0) {
-    //             moderatorLevel = 0;
-    //             autoLoginTimeout = 0;
-    //             resetGame();
-    //             return;
-    //         }
-    //         if (resp == 1) {
-    //             autoLoginTimeout = 0;
-    //             method37();
-    //             return;
-    //         }
-    //         if (reconnecting) {
-    //             u = "";
-    //             p = "";
-    //             resetLoginVars();
-    //             return;
-    //         }
-    //         if (resp == -1) {
-    //             showLoginScreenStatus("Error unable to login.", "Server timed out");
-    //             return;
-    //         }
-    //         if (resp == 3) {
-    //             showLoginScreenStatus("Invalid username or password.", "Try again, or create a new account");
-    //             return;
-    //         }
-    //         if (resp == 4) {
-    //             showLoginScreenStatus("That username is already logged in.", "Wait 60 seconds then retry");
-    //             return;
-    //         }
-    //         if (resp == 5) {
-    //             showLoginScreenStatus("The client has been updated.", "Please reload this page");
-    //             return;
-    //         }
-    //         if (resp == 6) {
-    //             showLoginScreenStatus("You may only use 1 character at once.", "Your ip-address is already in use");
-    //             return;
-    //         }
-    //         if (resp == 7) {
-    //             showLoginScreenStatus("Login attempts exceeded!", "Please try again in 5 minutes");
-    //             return;
-    //         }
-    //         if (resp == 8) {
-    //             showLoginScreenStatus("Error unable to login.", "Server rejected session");
-    //             return;
-    //         }
-    //         if (resp == 9) {
-    //             showLoginScreenStatus("Error unable to login.", "Loginserver rejected session");
-    //             return;
-    //         }
-    //         if (resp == 10) {
-    //             showLoginScreenStatus("That username is already in use.", "Wait 60 seconds then retry");
-    //             return;
-    //         }
-    //         if (resp == 11) {
-    //             showLoginScreenStatus("Account has been temporarily disabled", "for cheating or abuse");
-    //             return;
-    //         }
-    //         if (resp == 12) {
-    //             showLoginScreenStatus("Account has been permanently disabled", "for cheating or abuse");
-    //             return;
-    //         }
-    //         if (resp == 14) {
-    //             showLoginScreenStatus("Sorry! This world is currently full.", "Please try a different world");
-    //             worldFullTimeout = 1500;
-    //             return;
-    //         }
-    //         if (resp == 15) {
-    //             showLoginScreenStatus("You need a members account", "to login to this world");
-    //             return;
-    //         }
-    //         if (resp == 16) {
-    //             showLoginScreenStatus("Error - no reply from loginserver.", "Please try again");
-    //             return;
-    //         }
-    //         if (resp == 17) {
-    //             showLoginScreenStatus("Error - failed to decode profile.", "Contact customer support");
-    //             return;
-    //         }
-    //         if (resp == 18) {
-    //             showLoginScreenStatus("Account suspected stolen.", "Press 'recover a locked account' on front page.");
-    //             return;
-    //         }
-    //         if (resp == 20) {
-    //             showLoginScreenStatus("Error - loginserver mismatch", "Please try a different world");
-    //             return;
-    //         }
-    //         if (resp == 21) {
-    //             showLoginScreenStatus("Unable to login.", "That is not an RS-Classic account");
-    //             return;
-    //         }
-    //         if (resp == 22) {
-    //             showLoginScreenStatus("Password suspected stolen.", "Press 'change your password' on front page.");
-    //             return;
-    //         } else {
-    //             showLoginScreenStatus("Error unable to login.", "Unrecognised response code");
-    //             return;
-    //         }
-    //     } catch (Exception exception) {
-    //         System.out.println(String.valueOf(exception));
-    //     }
-    //     if (autoLoginTimeout > 0) {
-    //         try {
-    //             Thread.sleep(5000L);
-    //         } catch (Exception Ex) {
-    //         }
-    //         autoLoginTimeout--;
-    //         login(username, password, reconnecting);
-    //     }
-    //     if (reconnecting) {
-    //         username = "";
-    //         password = "";
-    //         resetLoginVars();
-    //     } else {
-    //         showLoginScreenStatus("Sorry! Unable to connect.", "Check internet settings or try another world");
-    //     }
-    // }
-
     protected void closeConnection() {
         if (clientStream != null) {
             try {

@@ -3,7 +3,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class CL_LoginHandler implements IPacketHandler {
+public class CL_RegisterHandler implements IPacketHandler {
     @Override
     public void handle(Socket socket, Buffer data) {
         try {
@@ -16,10 +16,10 @@ public class CL_LoginHandler implements IPacketHandler {
             String username = data.getString();
             String password = data.getString();
 
-            // TODO: do actual login here
+            // TODO: do actual registration here
 
             Buffer out = new Buffer();
-            out.putInt(LoginResponse.SUCCESS.getCode());
+            out.putInt(RegistrationResponse.SUCCESS.getCode());
             outStream.write(out.toArray());
             outStream.flush();
         } catch (IOException ex) {
