@@ -3905,13 +3905,14 @@ public class mudclient extends GameConnection {
     }
 
     protected void startGame() {
-        if (appletMode) {
-            String s = getDocumentBase().getHost().toLowerCase();
-            if (!s.endsWith("jagex.com") && !s.endsWith("jagex.co.uk") && !s.endsWith("runescape.com") && !s.endsWith("runescape.co.uk") && !s.endsWith("runescape.net") && !s.endsWith("runescape.org") && !s.endsWith("penguin") && !s.endsWith("puffin")) {
-                errorLoadingCodebase = true;
-                return;
-            }
-        }
+        // We will never run in appletMode
+        // if (appletMode) {
+        //     String s = getDocumentBase().getHost().toLowerCase();
+        //     if (!s.endsWith("jagex.com") && !s.endsWith("jagex.co.uk") && !s.endsWith("runescape.com") && !s.endsWith("runescape.co.uk") && !s.endsWith("runescape.net") && !s.endsWith("runescape.org") && !s.endsWith("penguin") && !s.endsWith("puffin")) {
+        //         errorLoadingCodebase = true;
+        //         return;
+        //     }
+        // }
         int total_exp = 0;
         for (int level = 0; level < 99; level++) {
             int level_1 = level + 1;
