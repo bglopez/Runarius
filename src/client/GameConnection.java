@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public class GameConnection extends GameShell {
 
@@ -13,7 +14,6 @@ public class GameConnection extends GameShell {
     public int port;
     public ClientStream clientStream;
     public Socket socket;
-    public Socket gameSocket;
     public int friendListCount;
     public long friendListHashes[];
     public int friendListOnline[];
@@ -200,44 +200,55 @@ public class GameConnection extends GameShell {
         login(username, password);
     }
 
-    protected void drawTextBox(String s, String s1) {
-        Graphics g = getGraphics();
-        Font font = new Font("Helvetica", 1, 15);
-        char c = '\u0200';
-        char c1 = '\u0158';
-        g.setColor(Color.black);
-        g.fillRect(c / 2 - 140, c1 / 2 - 25, 280, 50);
-        g.setColor(Color.white);
-        g.drawRect(c / 2 - 140, c1 / 2 - 25, 280, 50);
-        drawString(g, s, font, c / 2, c1 / 2 - 10);
-        drawString(g, s1, font, c / 2, c1 / 2 + 10);
-    }
-
     protected void checkConnection() {
         long l = System.currentTimeMillis();
-        if (clientStream.hasPacket())
-            packetLastRead = l;
-        if (l - packetLastRead > 5000L) {
-            packetLastRead = l;
-            clientStream.newPacket(Opcodes.Client.CL_PING.value);
-            clientStream.sendPacket();
-        }
+        long diff = l - packetLastRead;
+        InputStream inStream;
         try {
-            clientStream.writePacket(20);
+            inStream = socket.getInputStream();
+            if (inStream.available() > 0 && diff > 5000L) {
+                packetLastRead = l;
+                handlePacket(socket);
+            }
+            
         } catch (IOException Ex) {
             lostConnection();
             return;
         }
-        if (!method43())
+    }
+
+    private void handlePacket(Socket socket) {
+        InputStream inStream;
+        try {
+            inStream = socket.getInputStream();
+
+            if (inStream.available() >= 4) {
+                byte[] lengthOpcodeBuffer = inStream.readNBytes(4);
+                ByteBuffer headerBuffer = ByteBuffer.wrap(lengthOpcodeBuffer);
+                short length = headerBuffer.getShort();
+                short opcode = headerBuffer.getShort();
+    
+                // Ensure that the full packet data is available
+                if (inStream.available() >= length - 4) {
+                    byte[] dataBuffer = inStream.readNBytes(length - 2); // read length without length-bytes (2)
+                    Buffer data = new Buffer(dataBuffer);
+    
+                    IPacketHandler handler = ClientPacketHandlers.getHandlerByOpcode(opcode);
+    
+                    if (handler != null) {
+                        handler.handle(socket, data);
+                    } else {
+                        System.out.println("Unknown opcode: " + opcode);
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            Logger.error(ex.getMessage());
             return;
-        int psize = clientStream.readPacket(incomingPacket);
-        if (psize > 0) {
-            short ptype = (short)(incomingPacket[0] & 0xff);
-            handlePacket(Opcodes.Server.valueOf(ptype), ptype, psize);
         }
     }
 
-    private void handlePacket(Opcodes.Server opcode, int ptype, int psize) {
+    private void handlePacket_OLD(Opcodes.Server opcode, int ptype, int psize) {
         //ptype = clientStream.isaacCommand(ptype);
         System.out.println(String.format("opcode:%s(%d) psize:%d", opcode.name(), ptype, psize));
 //         System.out.println("opcode:" + opcode + " psize:" + psize);
@@ -312,6 +323,19 @@ public class GameConnection extends GameShell {
             handleIncomingPacket(opcode, ptype, psize, incomingPacket);
             return;
         }
+    }
+
+    protected void drawTextBox(String s, String s1) {
+        Graphics g = getGraphics();
+        Font font = new Font("Helvetica", 1, 15);
+        char c = '\u0200';
+        char c1 = '\u0158';
+        g.setColor(Color.black);
+        g.fillRect(c / 2 - 140, c1 / 2 - 25, 280, 50);
+        g.setColor(Color.white);
+        g.drawRect(c / 2 - 140, c1 / 2 - 25, 280, 50);
+        drawString(g, s, font, c / 2, c1 / 2 - 10);
+        drawString(g, s1, font, c / 2, c1 / 2 + 10);
     }
 
     private void sortFriendsList() {
@@ -451,9 +475,9 @@ public class GameConnection extends GameShell {
     protected void showServerMessage(String s) {
     }
 
-    protected boolean method43() {
-        return true;
-    }
+    // protected boolean method43() {
+    //     return true;
+    // }
 
     protected int getLinkUID() {
         return 0;

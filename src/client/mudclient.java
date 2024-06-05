@@ -399,6 +399,7 @@ public class mudclient extends GameConnection {
     private int controlRegisterStatus;
     private int teleportBubbleType[];
     private Panel panelLoginWelcome;
+    private int controlTestButton;
     private int combatTimeout;
     private Panel panelLoginNewuser;
     private int optionMenuCount;
@@ -2415,12 +2416,19 @@ public class mudclient extends GameConnection {
         int y = 40;
         int x = gameWidth / 2;
         if (!members) {
+
+            panelLoginWelcome.addButtonBackground(x, 100 + y, 120, 35);
+            panelLoginWelcome.addText(x, 100 + y, "Test Button", 5, false);
+            controlTestButton = panelLoginWelcome.addButton(x, 100 + y, 120, 35);
+
             panelLoginWelcome.addText(x, 200 + y, "Click on an option", 5, true);
+
             panelLoginWelcome.addButtonBackground(x - 100, 240 + y, 120, 35);
-            panelLoginWelcome.addButtonBackground(x + 100, 240 + y, 120, 35);
             panelLoginWelcome.addText(x - 100, 240 + y, "New User", 5, false);
-            panelLoginWelcome.addText(x + 100, 240 + y, "Existing User", 5, false);
             controlWelcomeNewuser = panelLoginWelcome.addButton(x - 100, 240 + y, 120, 35);
+
+            panelLoginWelcome.addButtonBackground(x + 100, 240 + y, 120, 35);
+            panelLoginWelcome.addText(x + 100, 240 + y, "Existing User", 5, false);
             controlWelcomeExistinguser = panelLoginWelcome.addButton(x + 100, 240 + y, 120, 35);
         } else {
             panelLoginWelcome.addText(x, 200 + y, "Welcome to RuneScape", 4, true);
@@ -7458,6 +7466,11 @@ public class mudclient extends GameConnection {
             super.worldFullTimeout--;
         if (loginScreen == 0) {
             panelLoginWelcome.handleMouse(super.mouseX, super.mouseY, super.lastMouseButtonDown, super.mouseButtonDown);
+
+            if (panelLoginWelcome.isClicked(controlTestButton)) {
+                System.out.println("Test button pressed");
+            }
+            
             if (panelLoginWelcome.isClicked(controlWelcomeNewuser)) {
                 loginScreen = 1;
                 panelLoginNewuser.updateText(controlRegisterUser, "");
