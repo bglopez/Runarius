@@ -7,12 +7,12 @@ import java.nio.ByteBuffer;
 
 public class Client implements Runnable {
     private Socket socket;
-    private Long sessionID;
 
     public Client(Socket socket) {
         this.socket = socket;
     }
 
+    @Override
     public void run() {
         try (InputStream inputStream = socket.getInputStream(); OutputStream outputStream = socket.getOutputStream()) {
             while (true) {
@@ -22,43 +22,18 @@ public class Client implements Runnable {
                     ByteBuffer headerBuffer = ByteBuffer.wrap(lengthOpcodeBuffer);
                     short length = headerBuffer.getShort();
                     short opcode = headerBuffer.getShort();
-    
+
                     // Ensure that the full packet data is available
                     if (inputStream.available() >= length - 4) {
-                        byte[] dataBuffer = inputStream.readNBytes(length - 2); // read length - length-bytes (2)
+                        byte[] dataBuffer = inputStream.readNBytes(length - 2); // read length without length-bytes (2)
                         Buffer data = new Buffer(dataBuffer);
 
-                        Opcodes.Client clientOpcode = Opcodes.Client.valueOf(opcode);
-    
-                        // Handle based on opcodes
-                        switch (clientOpcode) {
-                            case CL_SESSION: {
+                        IPacketHandler handler = PacketHandlers.getHandlerByOpcode(opcode);
 
-                                String username = data.getString();
-                                long sessionId = genSessionId(username);
-                                
-                                Buffer out = new Buffer();
-                                out.putLong(sessionId);
-                                
-                                outputStream.write(out.toArray());
-                                outputStream.flush();
-                                break;
-                            }
-                            case CL_LOGIN: {
-                                int clientVersion = data.getInt();
-                                Long sessionID = data.getLong();
-                                String username = data.getString();
-                                String password = data.getString();
-
-                                System.out.println(clientVersion);
-                                System.out.println(sessionID);
-                                System.out.println(username);
-                                System.out.println(password);
-                                break;
-                            }
-
-                            default:
-                                System.out.println("Unknown opcode: " + opcode);
+                        if (handler != null) {
+                            handler.handle(socket, data);
+                        } else {
+                            System.out.println("Unknown opcode: " + opcode);
                         }
                     } else {
                         Thread.sleep(50); // Wait for more data to arrive
@@ -82,12 +57,5 @@ public class Client implements Runnable {
             }
             System.out.println("Client disconnected");
         }
-    }
-    
-
-    private long genSessionId(String data) {
-        // Replace with your logic to generate a unique session ID
-        // This is a simplified example, you might want to use a cryptographically secure random number generator
-        return System.currentTimeMillis();
     }
 }
