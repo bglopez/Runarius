@@ -1,80 +1,121 @@
 <project name="RuneScapeClassic" default="all" basedir=".">
-    <property name="src" location="source" />
-    <property name="src.client" location="${src}/client" />
-    <property name="src.server" location="${src}/server" />
-    <property name="src.common" location="${src}/common" />
-    <property name="out" location="out" />
-    <property name="build" location="${out}/build" />
-    <property name="build.client" location="${build}/client" />
-    <property name="build.server" location="${build}/server" />
-    <property name="build.common" location="${build}/common" />
-    <property name="dist" location="${out}/dist" />
-    <property name="dist.client" location="${dist}/client" />
-    <property name="dist.server" location="${dist}/server" />
+    <!-- Define the source, output, build, and distribution directories -->
+    <property name="src.dir" location="src" />
+    <property name="out.dir" location="out" />
+    <property name="build.dir" location="${out.dir}/build" />
+    <property name="dist.dir" location="${out.dir}/dist" />
 
+    <!-- Initialize target: Create necessary build and distribution directories -->
     <target name="init">
-        <mkdir dir="${out}" />
-        <mkdir dir="${build}" />
-        <mkdir dir="${build.client}" />
-        <mkdir dir="${build.server}" />
-        <mkdir dir="${build.common}" />
-        <mkdir dir="${dist}" />
-        <mkdir dir="${dist.client}" />
-        <mkdir dir="${dist.server}" />
+        <!-- Create the main build directory -->
+        <mkdir dir="${build.dir}" />
+        <!-- Create subdirectories for client, server, and common within the build directory -->
+        <mkdir dir="${build.dir}/client" />
+        <mkdir dir="${build.dir}/server" />
+        <mkdir dir="${build.dir}/common" />
+        <!-- Create the main distribution directory -->
+        <mkdir dir="${dist.dir}" />
+        <!-- Create subdirectories for client and server within the distribution directory -->
+        <mkdir dir="${dist.dir}/client" />
+        <mkdir dir="${dist.dir}/server" />
     </target>
 
+    <!-- Compile common classes -->
     <target name="compile-common" depends="init">
-        <javac srcdir="${src.common}" destdir="${build}">
+        <!-- Compile all Java files in the common source directory and output the classes to the build.common directory -->
+        <javac srcdir="${src.dir}/common" destdir="${build.dir}/common">
+            <!-- Set the encoding for the Java compiler to UTF-8 -->
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
 
+    <!-- Compile client classes with common classes in classpath -->
     <target name="compile-client" depends="compile-common">
-        <javac srcdir="${src.client}" destdir="${build}">
+        <!-- Compile all Java files in the client source directory and output the classes to the build.client directory -->
+        <javac srcdir="${src.dir}/client" destdir="${build.dir}/client">
+            <!-- Include the compiled common classes in the classpath -->
             <classpath>
-                <pathelement path="${build.common}" />
+                <pathelement path="${build.dir}/common" />
             </classpath>
+            <!-- Set the encoding for the Java compiler to UTF-8 -->
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
 
+    <!-- Compile server classes with common classes in classpath -->
     <target name="compile-server" depends="compile-common">
-        <javac srcdir="${src.server}" destdir="${build}">
+        <!-- Compile all Java files in the server source directory and output the classes to the build.server directory -->
+        <javac srcdir="${src.dir}/server" destdir="${build.dir}/server">
+            <!-- Include the compiled common classes in the classpath -->
             <classpath>
-                <pathelement path="${build.common}" />
+                <pathelement path="${build.dir}/common" />
             </classpath>
+            <!-- Set the encoding for the Java compiler to UTF-8 -->
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
 
+    <!-- Copy client data directory to the distribution directory -->
     <target name="copy-client-data" depends="compile-client">
-        <copy todir="${dist.client}/data204">
+        <!-- Copy the data204 directory from the project root to the client distribution directory -->
+        <copy todir="${dist.dir}/client/data204">
             <fileset dir="./data204" />
         </copy>
     </target>
 
+    <!-- Package client JAR including compiled client and common classes -->
     <target name="jar-client" depends="copy-client-data">
-        <jar destfile="${dist.client}/client.jar" basedir="${build.client}">
+        <!-- Create a JAR file for the client, specifying the output location and the main class -->
+        <jar destfile="${dist.dir}/client/client.jar">
+            <!-- Specify the main class for the client JAR manifest -->
             <manifest>
-                <attribute name="Main-Class" value="client.mudclient"/>
+                <attribute name="Main-Class" value="mudclient"/>
             </manifest>
+            <!-- Include all compiled client classes in the JAR -->
+            <fileset dir="${build.dir}/client" />
+            <!-- Include all compiled common classes in the JAR -->
+            <fileset dir="${build.dir}/common" />
         </jar>
     </target>
 
+    <!-- Package server JAR including compiled server and common classes -->
     <target name="jar-server" depends="compile-server">
-        <jar destfile="${dist.server}/server.jar" basedir="${build.server}">
+        <!-- Create a JAR file for the server, specifying the output location and the main class -->
+        <jar destfile="${dist.dir}/server/server.jar">
+            <!-- Specify the main class for the server JAR manifest -->
             <manifest>
-                <attribute name="Main-Class" value="server.Server"/>
+                <attribute name="Main-Class" value="Server"/>
             </manifest>
+            <!-- Include all compiled server classes in the JAR -->
+            <fileset dir="${build.dir}/server" />
+            <!-- Include all compiled common classes in the JAR -->
+            <fileset dir="${build.dir}/common" />
         </jar>
     </target>
 
+    <!-- Aggregate target to build both client and server JAR files -->
     <target name="all" depends="jar-client, jar-server">
+        <!-- Output a message indicating the build is complete -->
         <echo message="Build complete: client.jar and server.jar created." />
     </target>
 
+    <!-- Clean target to delete build and distribution directories -->
     <target name="clean">
-        <delete dir="${build}" />
-        <delete dir="${dist}" />
+        <!-- Delete the build directory -->
+        <delete dir="${build.dir}" />
+        <!-- Delete the distribution directory -->
+        <delete dir="${dist.dir}" />
+    </target>
+
+    <!-- Run target to execute the client -->
+    <target name="run-client" depends="compile-client">
+        <!-- Run the client JAR -->
+        <java jar="${dist.dir}/client/client.jar" fork="true" />
+    </target>
+
+    <!-- Run target to execute the server -->
+    <target name="run-server" depends="compile-server">
+        <!-- Run the server JAR -->
+        <java jar="${dist.dir}/server/server.jar" fork="true" />
     </target>
 </project>
