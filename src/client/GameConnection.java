@@ -1,5 +1,7 @@
 import java.awt.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 public class GameConnection extends GameShell {
@@ -10,6 +12,8 @@ public class GameConnection extends GameShell {
     public String server;
     public int port;
     public ClientStream clientStream;
+    public Socket socket;
+    public Socket gameSocket;
     public int friendListCount;
     public long friendListHashes[];
     public int friendListOnline[];
@@ -137,14 +141,36 @@ public class GameConnection extends GameShell {
 
         try {
 
-            Socket socket = NetHelper.createSocket(server, port);
-            PacketOut packet = new PacketOut(Opcodes.Client.CL_SESSION.value);
+            if (socket == null) {
+                socket = NetHelper.createSocket(server, port);
+            }
+            OutputStream outputStream = socket.getOutputStream();
+            InputStream inputStream = socket.getInputStream();
 
-            packet.putString(username);
-            packet.Send(socket);
+            Buffer out = new Buffer();
+            out.putShort(Opcodes.Client.CL_SESSION.value); 
+            out.putString(username);
+            outputStream.write(out.toArrayWithLen());
+            outputStream.flush();
 
-            
-            
+            Buffer in = new Buffer(inputStream.readNBytes(Long.BYTES));
+            long sessid = in.getLong();
+            sessionID = sessid;
+
+            if (sessid == 0L) {
+                showLoginScreenStatus("Login server offline.", "Please try again later");
+                return;
+            }
+
+            out = new Buffer();
+            out.putShort(Opcodes.Client.CL_LOGIN.value);
+            out.putInt(clientVersion);
+            out.putLong(sessid);
+            out.putString(username);
+            out.putString(password);
+            outputStream.write(out.toArrayWithLen());
+            outputStream.flush();
+
 
         } catch (IOException ex) {
             System.out.println("Unable to create socket: " + ex.getMessage());

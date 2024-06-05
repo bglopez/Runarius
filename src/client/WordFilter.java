@@ -15,14 +15,14 @@ public class WordFilter {
             "cook", "cook's", "cooks", "seeks", "sheet"
     };
 
-    public static void loadFilters(Buffer fragments, Buffer bad, Buffer host, Buffer tld) {
+    public static void loadFilters(Buffer_ fragments, Buffer_ bad, Buffer_ host, Buffer_ tld) {
         loadBad(bad);
         loadHost(host);
         loadFragments(fragments);
         loadTld(tld);
     }
 
-    public static void loadTld(Buffer buffer) {
+    public static void loadTld(Buffer_ buffer) {
         int wordcount = buffer.getUnsignedInt();
         tldList = new char[wordcount][];
         tldType = new int[wordcount];
@@ -37,21 +37,21 @@ public class WordFilter {
 
     }
 
-    public static void loadBad(Buffer buffer) {
+    public static void loadBad(Buffer_ buffer) {
         int wordcount = buffer.getUnsignedInt();
         badList = new char[wordcount][];
         badCharIds = new byte[wordcount][][];
         readBuffer(buffer, badList, badCharIds);
     }
 
-    public static void loadHost(Buffer buffer) {
+    public static void loadHost(Buffer_ buffer) {
         int wordcount = buffer.getUnsignedInt();
         hostList = new char[wordcount][];
         hostCharIds = new byte[wordcount][][];
         readBuffer(buffer, hostList, hostCharIds);
     }
 
-    public static void loadFragments(Buffer buffer) {
+    public static void loadFragments(Buffer_ buffer) {
         hashFragments = new int[buffer.getUnsignedInt()];
         for (int i = 0; i < hashFragments.length; i++) {
             hashFragments[i] = buffer.getUnsignedShort();
@@ -59,7 +59,7 @@ public class WordFilter {
 
     }
 
-    public static void readBuffer(Buffer buffer, char wordList[][], byte charIds[][][]) {
+    public static void readBuffer(Buffer_ buffer, char wordList[][], byte charIds[][][]) {
         for (int i = 0; i < wordList.length; i++) {
             char currentWord[] = new char[buffer.getUnsignedByte()];
             for (int j = 0; j < currentWord.length; j++)

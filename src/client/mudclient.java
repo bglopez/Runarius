@@ -2981,7 +2981,7 @@ public class mudclient extends GameConnection {
             byte buffbandenc[] = Utility.loadData("badenc.txt", 0, abyte1);
             byte buffhostenc[] = Utility.loadData("hostenc.txt", 0, abyte1);
             byte bufftldlist[] = Utility.loadData("tldlist.txt", 0, abyte1);
-            WordFilter.loadFilters(new Buffer(buffragments), new Buffer(buffbandenc), new Buffer(buffhostenc), new Buffer(bufftldlist));
+            WordFilter.loadFilters(new Buffer_(buffragments), new Buffer_(buffbandenc), new Buffer_(buffhostenc), new Buffer_(bufftldlist));
             return;
         }
     }

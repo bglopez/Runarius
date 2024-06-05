@@ -1,6 +1,6 @@
 import java.math.BigInteger;
 
-public class Buffer {
+public class Buffer_ {
 
     /*static CRC32 unusedCRC = new CRC32();
     private static int unusedArray[] = {
@@ -12,7 +12,7 @@ public class Buffer {
     public byte buffer[];
     public int offset;
 
-    public Buffer(byte buff[]) {
+    public Buffer_(byte buff[]) {
         buffer = buff;
         offset = 0;
     }
