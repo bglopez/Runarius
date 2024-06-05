@@ -7,57 +7,46 @@
 
     <!-- Initialize target: Create necessary build and distribution directories -->
     <target name="init">
-        <!-- Create the main build directory -->
         <mkdir dir="${build.dir}" />
-        <!-- Create subdirectories for client, server, and common within the build directory -->
         <mkdir dir="${build.dir}/client" />
         <mkdir dir="${build.dir}/server" />
         <mkdir dir="${build.dir}/common" />
-        <!-- Create the main distribution directory -->
         <mkdir dir="${dist.dir}" />
-        <!-- Create subdirectories for client and server within the distribution directory -->
         <mkdir dir="${dist.dir}/client" />
         <mkdir dir="${dist.dir}/server" />
     </target>
 
     <!-- Compile common classes -->
     <target name="compile-common" depends="init">
-        <!-- Compile all Java files in the common source directory and output the classes to the build.common directory -->
         <javac srcdir="${src.dir}/common" destdir="${build.dir}/common">
-            <!-- Set the encoding for the Java compiler to UTF-8 -->
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
 
     <!-- Compile client classes with common classes in classpath -->
     <target name="compile-client" depends="compile-common">
-        <!-- Compile all Java files in the client source directory and output the classes to the build.client directory -->
         <javac srcdir="${src.dir}/client" destdir="${build.dir}/client">
-            <!-- Include the compiled common classes in the classpath -->
+            <!-- Add dependencies -->
             <classpath>
                 <pathelement path="${build.dir}/common" />
             </classpath>
-            <!-- Set the encoding for the Java compiler to UTF-8 -->
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
 
     <!-- Compile server classes with common classes in classpath -->
     <target name="compile-server" depends="compile-common">
-        <!-- Compile all Java files in the server source directory and output the classes to the build.server directory -->
         <javac srcdir="${src.dir}/server" destdir="${build.dir}/server">
-            <!-- Include the compiled common classes in the classpath -->
+            <!-- Add dependencies -->
             <classpath>
                 <pathelement path="${build.dir}/common" />
             </classpath>
-            <!-- Set the encoding for the Java compiler to UTF-8 -->
             <compilerarg line="-encoding UTF-8" />
         </javac>
     </target>
 
-    <!-- Copy client data directory to the distribution directory -->
+    <!-- Copy client data (data204) directory to the distribution directory -->
     <target name="copy-client-data" depends="compile-client">
-        <!-- Copy the data204 directory from the project root to the client distribution directory -->
         <copy todir="${dist.dir}/client/data204">
             <fileset dir="./data204" />
         </copy>
@@ -95,27 +84,22 @@
 
     <!-- Aggregate target to build both client and server JAR files -->
     <target name="all" depends="jar-client, jar-server">
-        <!-- Output a message indicating the build is complete -->
         <echo message="Build complete: client.jar and server.jar created." />
     </target>
 
     <!-- Clean target to delete build and distribution directories -->
     <target name="clean">
-        <!-- Delete the build directory -->
         <delete dir="${build.dir}" />
-        <!-- Delete the distribution directory -->
         <delete dir="${dist.dir}" />
     </target>
 
     <!-- Run target to execute the client -->
     <target name="run-client" depends="compile-client">
-        <!-- Run the client JAR -->
         <java jar="${dist.dir}/client/client.jar" fork="true" />
     </target>
 
     <!-- Run target to execute the server -->
     <target name="run-server" depends="compile-server">
-        <!-- Run the server JAR -->
         <java jar="${dist.dir}/server/server.jar" fork="true" />
     </target>
 </project>
